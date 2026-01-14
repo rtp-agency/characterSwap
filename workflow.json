@@ -1,0 +1,1299 @@
+{
+  "57": {
+    "inputs": {
+      "image": "pasted/image.png"
+    },
+    "class_type": "LoadImage",
+    "_meta": {
+      "title": "Загрузить изображение"
+    }
+  },
+  "63": {
+    "inputs": {
+      "video": "sunnyvlady_1765970765_3789559386357184157_75978197526.mp4",
+      "force_rate": 30,
+      "custom_width": 488,
+      "custom_height": 832,
+      "frame_load_cap": 0,
+      "skip_first_frames": 0,
+      "select_every_nth": 1,
+      "format": "AnimateDiff"
+    },
+    "class_type": "VHS_LoadVideo",
+    "_meta": {
+      "title": "Load Video (Upload) 🎥🅥🅗🅢"
+    }
+  },
+  "99": {
+    "inputs": {
+      "color": "0, 0, 0",
+      "device": "gpu",
+      "image": [
+        "247",
+        0
+      ],
+      "mask": [
+        "108",
+        0
+      ]
+    },
+    "class_type": "DrawMaskOnImage",
+    "_meta": {
+      "title": "Draw Mask On Image"
+    }
+  },
+  "108": {
+    "inputs": {
+      "block_size": 79,
+      "device": "gpu",
+      "masks": [
+        "182",
+        0
+      ]
+    },
+    "class_type": "BlockifyMask",
+    "_meta": {
+      "title": "Blockify Mask"
+    }
+  },
+  "172": {
+    "inputs": {
+      "width": [
+        "180",
+        1
+      ],
+      "height": [
+        "180",
+        2
+      ],
+      "face_padding": 0,
+      "model": [
+        "178",
+        0
+      ],
+      "images": [
+        "773",
+        0
+      ]
+    },
+    "class_type": "PoseAndFaceDetection",
+    "_meta": {
+      "title": "Pose and Face Detection"
+    }
+  },
+  "173": {
+    "inputs": {
+      "width": [
+        "180",
+        1
+      ],
+      "height": [
+        "180",
+        2
+      ],
+      "retarget_padding": 16,
+      "body_stick_width": -1,
+      "hand_stick_width": -1,
+      "draw_head": "True",
+      "pose_data": [
+        "172",
+        0
+      ]
+    },
+    "class_type": "DrawViTPose",
+    "_meta": {
+      "title": "Draw ViT Pose"
+    }
+  },
+  "178": {
+    "inputs": {
+      "vitpose_model": "vitpose-l-wholebody.onnx",
+      "yolo_model": "yolov10m.onnx",
+      "onnx_device": "CUDAExecutionProvider"
+    },
+    "class_type": "OnnxDetectionModelLoader",
+    "_meta": {
+      "title": "ONNX Detection Model Loader"
+    }
+  },
+  "180": {
+    "inputs": {
+      "image": [
+        "247",
+        0
+      ]
+    },
+    "class_type": "GetImageSizeAndCount",
+    "_meta": {
+      "title": "Get Image Size & Count"
+    }
+  },
+  "182": {
+    "inputs": {
+      "expand": 10,
+      "incremental_expandrate": 0,
+      "tapered_corners": true,
+      "flip_input": false,
+      "blur_radius": 0,
+      "lerp_alpha": 1,
+      "decay_factor": 1,
+      "fill_holes": false,
+      "mask": [
+        "1067",
+        1
+      ]
+    },
+    "class_type": "GrowMaskWithBlur",
+    "_meta": {
+      "title": "Grow Mask With Blur"
+    }
+  },
+  "187": {
+    "inputs": {
+      "enable_fp16_accumulation": true,
+      "model": [
+        "882",
+        0
+      ]
+    },
+    "class_type": "ModelPatchTorchSettings",
+    "_meta": {
+      "title": "Model Patch Torch Settings"
+    }
+  },
+  "195": {
+    "inputs": {
+      "lora_name": "lightx2v_I2V_14B_480p_cfg_step_distill_rank256_bf16.safetensors",
+      "strength_model": 1,
+      "model": [
+        "187",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Загрузчик LoRA (Только модель)"
+    }
+  },
+  "199": {
+    "inputs": {
+      "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+      "type": "wan",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Загрузить CLIP"
+    }
+  },
+  "200": {
+    "inputs": {
+      "clip_name": "model.safetensors"
+    },
+    "class_type": "CLIPVisionLoader",
+    "_meta": {
+      "title": "Загрузить видение CLIP"
+    }
+  },
+  "201": {
+    "inputs": {
+      "vae_name": "wan_2.1_vae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Загрузить VAE"
+    }
+  },
+  "203": {
+    "inputs": {
+      "text": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走,realistic proportions, natural physics, subtle movement, realistic body, normal size, anatomically correct, realistic bounce, minimal jiggle, static, stiff, rigid,heels, high heels, camera movements, camera shaking",
+      "clip": [
+        "199",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Negative Prompt)"
+    }
+  },
+  "204": {
+    "inputs": {
+      "text": "3d animation, her breasts are bouncing, extreme jiggle physics all body parts, massive breasts perpetual bounce, huge ass clapping motion, thick thighs jiggle, exaggerated hourglass proportions, hentai body physics style, cartoon bounce maximum, independent asset movement, breast pendulum swing, booty wave motion, oversized curves everywhere, impossible proportions intentional, voluptuous figure extreme, thicc aesthetic complete, anime physics exaggerated, freezed background, static background, minimal motion on background,3d render,3d, her butt is bouncing, her ass is bouncing,wxlkey,ass motion, ass physics, ass jiggle, butt jiggle,detailed video, best quality,detail motion,3d,3d animation,gl0ssy, shiny skin,skindentation, skin dentation,pixar style,detailed eyelashes, volumetric lighting, cinematic lighting, global illumination, ray tracing, shot on 35mm lens, f/1.8, cinematic lighting, highly detailed skin texture, pores, natural imperfections, slight film grain, kodak portra 400, masterpiece, no camera movements, no camera artifacts\n\n\n\n\n\n\n",
+      "clip": [
+        "199",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Positive Prompt)"
+    }
+  },
+  "215": {
+    "inputs": {
+      "crop": "center",
+      "clip_vision": [
+        "200",
+        0
+      ],
+      "image": [
+        "292",
+        0
+      ]
+    },
+    "class_type": "CLIPVisionEncode",
+    "_meta": {
+      "title": "Кодирование видения CLIP"
+    }
+  },
+  "220": {
+    "inputs": {
+      "width": [
+        "884",
+        0
+      ],
+      "height": [
+        "884",
+        1
+      ],
+      "length": [
+        "457",
+        0
+      ],
+      "batch_size": 1,
+      "continue_motion_max_frames": 5,
+      "video_frame_offset": 0,
+      "positive": [
+        "204",
+        0
+      ],
+      "negative": [
+        "203",
+        0
+      ],
+      "vae": [
+        "201",
+        0
+      ],
+      "clip_vision_output": [
+        "215",
+        0
+      ],
+      "reference_image": [
+        "292",
+        0
+      ],
+      "face_video": [
+        "172",
+        1
+      ],
+      "pose_video": [
+        "173",
+        0
+      ]
+    },
+    "class_type": "WanAnimateToVideo",
+    "_meta": {
+      "title": "WanAnimateToVideo"
+    }
+  },
+  "222": {
+    "inputs": {
+      "samples": [
+        "261",
+        0
+      ],
+      "vae": [
+        "201",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Декодировать VAE"
+    }
+  },
+  "238": {
+    "inputs": {
+      "anything": [
+        "222",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "Clean VRAM Used"
+    }
+  },
+  "241": {
+    "inputs": {
+      "text": "0",
+      "anything": [
+        "220",
+        4
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Any"
+    }
+  },
+  "242": {
+    "inputs": {
+      "text": "161",
+      "anything": [
+        "220",
+        5
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Any"
+    }
+  },
+  "243": {
+    "inputs": {
+      "seed": 322717611573274,
+      "steps": 5,
+      "cfg": 0.8,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.85,
+      "model": [
+        "881",
+        0
+      ],
+      "positive": [
+        "220",
+        0
+      ],
+      "negative": [
+        "220",
+        1
+      ],
+      "latent_image": [
+        "220",
+        2
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "245": {
+    "inputs": {
+      "video_info": [
+        "63",
+        3
+      ]
+    },
+    "class_type": "VHS_VideoInfoLoaded",
+    "_meta": {
+      "title": "Video Info (Loaded) 🎥🅥🅗🅢"
+    }
+  },
+  "247": {
+    "inputs": {
+      "width": [
+        "884",
+        0
+      ],
+      "height": [
+        "884",
+        1
+      ],
+      "upscale_method": "lanczos",
+      "keep_proportion": "crop",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 16,
+      "device": "cpu",
+      "image": [
+        "63",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "250": {
+    "inputs": {
+      "fps": [
+        "245",
+        0
+      ],
+      "images": [
+        "172",
+        1
+      ]
+    },
+    "class_type": "PreviewAnimation",
+    "_meta": {
+      "title": "Preview Animation 510x512x512"
+    }
+  },
+  "253": {
+    "inputs": {
+      "fps": 30,
+      "images": [
+        "173",
+        0
+      ]
+    },
+    "class_type": "PreviewAnimation",
+    "_meta": {
+      "title": "Preview Animation 510x448x896"
+    }
+  },
+  "261": {
+    "inputs": {
+      "trim_amount": [
+        "220",
+        3
+      ],
+      "samples": [
+        "243",
+        0
+      ]
+    },
+    "class_type": "TrimVideoLatent",
+    "_meta": {
+      "title": "TrimVideoLatent"
+    }
+  },
+  "273": {
+    "inputs": {
+      "output": "",
+      "input": [
+        "245",
+        1
+      ]
+    },
+    "class_type": "Display Int (rgthree)",
+    "_meta": {
+      "title": "FRAME COUNT"
+    }
+  },
+  "292": {
+    "inputs": {
+      "width": [
+        "884",
+        0
+      ],
+      "height": [
+        "884",
+        1
+      ],
+      "upscale_method": "lanczos",
+      "keep_proportion": "resize",
+      "pad_color": "0, 0, 0",
+      "crop_position": "center",
+      "divisible_by": 16,
+      "device": "cpu",
+      "image": [
+        "334",
+        0
+      ]
+    },
+    "class_type": "ImageResizeKJv2",
+    "_meta": {
+      "title": "Resize Image v2"
+    }
+  },
+  "297": {
+    "inputs": {
+      "text": "511",
+      "anything": [
+        "298",
+        0
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Any"
+    }
+  },
+  "298": {
+    "inputs": {
+      "expression": "a*b+1",
+      "a": [
+        "302",
+        0
+      ],
+      "b": [
+        "301",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "301": {
+    "inputs": {
+      "value": [
+        "245",
+        2
+      ]
+    },
+    "class_type": "FloatConstant",
+    "_meta": {
+      "title": "Seconds"
+    }
+  },
+  "302": {
+    "inputs": {
+      "value": [
+        "245",
+        0
+      ]
+    },
+    "class_type": "FloatConstant",
+    "_meta": {
+      "title": "FPS"
+    }
+  },
+  "310": {
+    "inputs": {
+      "text": "17.0",
+      "anything": [
+        "245",
+        2
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Any"
+    }
+  },
+  "312": {
+    "inputs": {
+      "fps": 30,
+      "images": [
+        "99",
+        0
+      ]
+    },
+    "class_type": "PreviewAnimation",
+    "_meta": {
+      "title": "Preview Animation 510x448x896"
+    }
+  },
+  "316": {
+    "inputs": {
+      "images": [
+        "292",
+        0
+      ]
+    },
+    "class_type": "PreviewImage",
+    "_meta": {
+      "title": "Предварительный просмотр изображения"
+    }
+  },
+  "321": {
+    "inputs": {
+      "frame_rate": [
+        "245",
+        0
+      ],
+      "loop_count": 0,
+      "filename_prefix": "IAMCCS/wananimatev2_nat",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": false,
+      "trim_to_audio": true,
+      "pingpong": false,
+      "save_output": false,
+      "images": [
+        "222",
+        0
+      ],
+      "audio": [
+        "63",
+        2
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "8 Steps"
+    }
+  },
+  "334": {
+    "inputs": {
+      "upscale_model": [
+        "335",
+        0
+      ],
+      "image": [
+        "57",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "Апскейл изображения (с использованием модели)"
+    }
+  },
+  "335": {
+    "inputs": {
+      "model_name": "RealESRGAN_x2plus.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Загрузить модель апскейла"
+    }
+  },
+  "345": {
+    "inputs": {
+      "value": 0
+    },
+    "class_type": "PrimitiveInt",
+    "_meta": {
+      "title": "Annotation Frame"
+    }
+  },
+  "347": {
+    "inputs": {
+      "batch_index": [
+        "345",
+        0
+      ],
+      "length": 1,
+      "image": [
+        "180",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "Изображение из партии"
+    }
+  },
+  "349": {
+    "inputs": {
+      "pose_data": [
+        "172",
+        0
+      ]
+    },
+    "class_type": "PoseRetargetPromptHelper",
+    "_meta": {
+      "title": "Pose Retarget Prompt Helper"
+    }
+  },
+  "350": {
+    "inputs": {
+      "text": "Change the person to face forward.",
+      "anything": [
+        "349",
+        0
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Any"
+    }
+  },
+  "351": {
+    "inputs": {
+      "text": "Change the person to face forward.",
+      "anything": [
+        "349",
+        1
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Any"
+    }
+  },
+  "393": {
+    "inputs": {
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "IAMCCS/wananimatev2_nat",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": false,
+      "trim_to_audio": true,
+      "pingpong": false,
+      "save_output": false,
+      "images": [
+        "800",
+        0
+      ],
+      "audio": [
+        "63",
+        2
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "8 Steps"
+    }
+  },
+  "397": {
+    "inputs": {
+      "batch_index": [
+        "220",
+        4
+      ],
+      "length": 4096,
+      "image": [
+        "222",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "Изображение из партии"
+    }
+  },
+  "457": {
+    "inputs": {
+      "value": 161
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "Frames"
+    }
+  },
+  "773": {
+    "inputs": {
+      "color": "0,0,0",
+      "device": "gpu",
+      "image": [
+        "180",
+        0
+      ],
+      "mask": [
+        "182",
+        1
+      ]
+    },
+    "class_type": "DrawMaskOnImage",
+    "_meta": {
+      "title": "Draw Mask On Image"
+    }
+  },
+  "795": {
+    "inputs": {
+      "seed": 387378783691198,
+      "steps": 5,
+      "cfg": 0.8,
+      "sampler_name": "euler",
+      "scheduler": "simple",
+      "denoise": 0.85,
+      "model": [
+        "880",
+        0
+      ],
+      "positive": [
+        "801",
+        0
+      ],
+      "negative": [
+        "801",
+        1
+      ],
+      "latent_image": [
+        "801",
+        2
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "796": {
+    "inputs": {
+      "text": "5",
+      "anything": [
+        "801",
+        4
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Any"
+    }
+  },
+  "797": {
+    "inputs": {
+      "trim_amount": [
+        "801",
+        3
+      ],
+      "samples": [
+        "795",
+        0
+      ]
+    },
+    "class_type": "TrimVideoLatent",
+    "_meta": {
+      "title": "TrimVideoLatent"
+    }
+  },
+  "798": {
+    "inputs": {
+      "samples": [
+        "797",
+        0
+      ],
+      "vae": [
+        "201",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "Декодировать VAE"
+    }
+  },
+  "799": {
+    "inputs": {
+      "batch_index": [
+        "801",
+        4
+      ],
+      "length": 4096,
+      "image": [
+        "798",
+        0
+      ]
+    },
+    "class_type": "ImageFromBatch",
+    "_meta": {
+      "title": "Изображение из партии"
+    }
+  },
+  "800": {
+    "inputs": {
+      "image1": [
+        "222",
+        0
+      ],
+      "image2": [
+        "799",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "Партия изображений"
+    }
+  },
+  "801": {
+    "inputs": {
+      "width": [
+        "884",
+        0
+      ],
+      "height": [
+        "884",
+        1
+      ],
+      "length": [
+        "457",
+        0
+      ],
+      "batch_size": 1,
+      "continue_motion_max_frames": 5,
+      "video_frame_offset": [
+        "804",
+        3
+      ],
+      "positive": [
+        "204",
+        0
+      ],
+      "negative": [
+        "203",
+        0
+      ],
+      "vae": [
+        "201",
+        0
+      ],
+      "clip_vision_output": [
+        "215",
+        0
+      ],
+      "reference_image": [
+        "292",
+        0
+      ],
+      "face_video": [
+        "172",
+        1
+      ],
+      "pose_video": [
+        "173",
+        0
+      ],
+      "continue_motion": [
+        "804",
+        2
+      ]
+    },
+    "class_type": "WanAnimateToVideo",
+    "_meta": {
+      "title": "WanAnimateToVideo"
+    }
+  },
+  "802": {
+    "inputs": {
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "wan_native",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": false,
+      "trim_to_audio": true,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "815",
+        0
+      ],
+      "audio": [
+        "63",
+        2
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "803": {
+    "inputs": {
+      "image1": [
+        "804",
+        2
+      ],
+      "image2": [
+        "799",
+        0
+      ]
+    },
+    "class_type": "ImageBatch",
+    "_meta": {
+      "title": "Партия изображений"
+    }
+  },
+  "804": {
+    "inputs": {
+      "total": [
+        "808",
+        0
+      ],
+      "initial_value1": [
+        "822",
+        0
+      ],
+      "initial_value2": [
+        "220",
+        5
+      ]
+    },
+    "class_type": "easy forLoopStart",
+    "_meta": {
+      "title": "For Loop Start"
+    }
+  },
+  "805": {
+    "inputs": {
+      "flow": [
+        "804",
+        0
+      ],
+      "initial_value1": [
+        "810",
+        0
+      ],
+      "initial_value2": [
+        "801",
+        5
+      ]
+    },
+    "class_type": "easy forLoopEnd",
+    "_meta": {
+      "title": "For Loop End"
+    }
+  },
+  "808": {
+    "inputs": {
+      "expression": "ceil((a/(b-c))-1)",
+      "a": [
+        "245",
+        1
+      ],
+      "b": [
+        "457",
+        0
+      ],
+      "c": [
+        "816",
+        0
+      ]
+    },
+    "class_type": "MathExpression|pysssss",
+    "_meta": {
+      "title": "Math Expression 🐍"
+    }
+  },
+  "809": {
+    "inputs": {
+      "text": "2",
+      "anything": [
+        "804",
+        1
+      ]
+    },
+    "class_type": "easy showAnything",
+    "_meta": {
+      "title": "Show Any"
+    }
+  },
+  "810": {
+    "inputs": {
+      "anything": [
+        "803",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "Clean VRAM Used"
+    }
+  },
+  "814": {
+    "inputs": {
+      "anything": [
+        "805",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "Clean VRAM Used"
+    }
+  },
+  "815": {
+    "inputs": {
+      "anything": [
+        "814",
+        0
+      ]
+    },
+    "class_type": "easy clearCacheAll",
+    "_meta": {
+      "title": "Clear Cache All"
+    }
+  },
+  "816": {
+    "inputs": {
+      "value": 5
+    },
+    "class_type": "INTConstant",
+    "_meta": {
+      "title": "Overlaps"
+    }
+  },
+  "822": {
+    "inputs": {
+      "anything": [
+        "222",
+        0
+      ]
+    },
+    "class_type": "easy cleanGpuUsed",
+    "_meta": {
+      "title": "Clean VRAM Used"
+    }
+  },
+  "880": {
+    "inputs": {
+      "weight": 1.7,
+      "model": [
+        "195",
+        0
+      ],
+      "latent": [
+        "801",
+        2
+      ]
+    },
+    "class_type": "WanVideoEnhanceAVideoKJ",
+    "_meta": {
+      "title": "WanVideo Enhance A Video (native)"
+    }
+  },
+  "881": {
+    "inputs": {
+      "weight": 1.7,
+      "model": [
+        "195",
+        0
+      ],
+      "latent": [
+        "220",
+        2
+      ]
+    },
+    "class_type": "WanVideoEnhanceAVideoKJ",
+    "_meta": {
+      "title": "WanVideo Enhance A Video (native)"
+    }
+  },
+  "882": {
+    "inputs": {
+      "lora_name": "BounceHighWan2_2.safetensors",
+      "strength_model": 0.35,
+      "model": [
+        "886",
+        0
+      ]
+    },
+    "class_type": "LoraLoaderModelOnly",
+    "_meta": {
+      "title": "Загрузчик LoRA (Только модель)"
+    }
+  },
+  "884": {
+    "inputs": {
+      "mode": "Manual",
+      "latent_type": "latent_128x16",
+      "width": 448,
+      "height": 896,
+      "auto_detect": true,
+      "rescale_mode": "resolution",
+      "rescale_value": 1.5152288168283161,
+      "batch_size": 1,
+      "input_image": [
+        "334",
+        0
+      ]
+    },
+    "class_type": "ResolutionMaster",
+    "_meta": {
+      "title": "Resolution Master"
+    }
+  },
+  "886": {
+    "inputs": {
+      "model_name": "wan2.2_animate_14B_bf16.safetensors",
+      "weight_dtype": "fp16",
+      "compute_dtype": "fp16",
+      "patch_cublaslinear": false,
+      "sage_attention": "disabled",
+      "enable_fp16_accumulation": true
+    },
+    "class_type": "DiffusionModelLoaderKJ",
+    "_meta": {
+      "title": "Diffusion Model Loader KJ"
+    }
+  },
+  "1020": {
+    "inputs": {
+      "frame_rate": 30,
+      "loop_count": 0,
+      "filename_prefix": "wan_native",
+      "format": "video/h264-mp4",
+      "pix_fmt": "yuv420p",
+      "crf": 19,
+      "save_metadata": true,
+      "trim_to_audio": false,
+      "pingpong": false,
+      "save_output": true,
+      "images": [
+        "1025",
+        0
+      ],
+      "audio": [
+        "63",
+        2
+      ]
+    },
+    "class_type": "VHS_VideoCombine",
+    "_meta": {
+      "title": "Video Combine 🎥🅥🅗🅢"
+    }
+  },
+  "1023": {
+    "inputs": {
+      "model_name": "2xNomosUni_span_multijpg.pth"
+    },
+    "class_type": "UpscaleModelLoader",
+    "_meta": {
+      "title": "Загрузить модель апскейла"
+    }
+  },
+  "1025": {
+    "inputs": {
+      "upscale_model": [
+        "1023",
+        0
+      ],
+      "image": [
+        "815",
+        0
+      ]
+    },
+    "class_type": "ImageUpscaleWithModel",
+    "_meta": {
+      "title": "Апскейл изображения (с использованием модели)"
+    }
+  },
+  "1067": {
+    "inputs": {
+      "prompt": "person, body, face, arms, legs, head, feet, hands, chest, neck, face",
+      "threshold": 0.15,
+      "sam_model": [
+        "1068",
+        0
+      ],
+      "grounding_dino_model": [
+        "1069",
+        0
+      ],
+      "image": [
+        "347",
+        0
+      ]
+    },
+    "class_type": "GroundingDinoSAMSegment (segment anything)",
+    "_meta": {
+      "title": "GroundingDinoSAMSegment (segment anything)"
+    }
+  },
+  "1068": {
+    "inputs": {
+      "model_name": "sam_vit_h (2.56GB)"
+    },
+    "class_type": "SAMModelLoader (segment anything)",
+    "_meta": {
+      "title": "SAMModelLoader (segment anything)"
+    }
+  },
+  "1069": {
+    "inputs": {
+      "model_name": "GroundingDINO_SwinT_OGC (694MB)"
+    },
+    "class_type": "GroundingDinoModelLoader (segment anything)",
+    "_meta": {
+      "title": "GroundingDinoModelLoader (segment anything)"
+    }
+  }
+}
