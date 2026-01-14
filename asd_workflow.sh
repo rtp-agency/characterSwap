@@ -266,6 +266,10 @@ BOT_DIR="/workspace/characterSwap"
 mkdir -p "$BOT_DIR"
 cd "$BOT_DIR"
 
+# Скачиваем .env файл
+echo ">>> Downloading .env file..."
+wget -O "$BOT_DIR/.env" "https://www.dropbox.com/scl/fi/40cjh3eli3hwp51s0c682/.env?rlkey=abo3by43ahkhdch3gidvs992u&st=aaekg7cm&dl=1"
+
 # Создаем venv для бота
 if [ ! -d "$BOT_DIR/venv" ]; then
     echo ">>> Creating virtual environment for bot..."
