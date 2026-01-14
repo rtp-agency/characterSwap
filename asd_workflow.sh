@@ -1,5 +1,12 @@
 #!/bin/bash
 
+# Сначала чиним путь к ComfyUI (КРИТИЧНО для Vast.ai)
+if [ ! -f "/workspace/ComfyUI/main.py" ]; then
+    echo "[Fix] ComfyUI missing in workspace. Linking..."
+    rm -rf /workspace/ComfyUI
+    ln -s /opt/workspace-internal/ComfyUI /workspace/ComfyUI
+fi
+
 BASE="/workspace/ComfyUI/models"
 
 # Функция для скачивания
