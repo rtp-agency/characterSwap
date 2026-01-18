@@ -1259,7 +1259,7 @@
   "1067": {
     "inputs": {
       "prompt": "person, body, face, arms, legs, head, feet, hands, chest, neck, face",
-      "threshold": 0.15,
+      "threshold": 0.35,
       "sam_model": [
         "1068",
         0

@@ -493,6 +493,8 @@ async def process_task(task: QueueTask, port_queue: PortQueueManager):
 async def wait_for_completion(session, comfy_url, prompt_id, user_id, timeout=12000):
     start_time = asyncio.get_event_loop().time()
     last_progress = -1
+    consecutive_errors = 0
+    max_consecutive_errors = 5
     
     while True:
         if asyncio.get_event_loop().time() - start_time > timeout:
@@ -521,9 +523,16 @@ async def wait_for_completion(session, comfy_url, prompt_id, user_id, timeout=12
                         if item[1] == prompt_id:
                             # Извлекаем прогресс если есть
                             break
+            
+            consecutive_errors = 0
         
-        except Exception as e:
+        except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+            consecutive_errors += 1
             print(f"Error checking status: {e}")
+            if consecutive_errors >= max_consecutive_errors:
+                raise Exception("ComfyUI port is not responding")
+        except Exception:
+            raise
         
         await asyncio.sleep(2)
 
