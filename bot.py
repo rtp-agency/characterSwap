@@ -2,6 +2,7 @@
 Telegram Bot for ComfyUI - Motion Transfer
 Photo + Video = Animated Photo
 Multi-GPU Support with Port Rotation
+FIXED VERSION: Added error handling for face detection and video duration issues
 """
 import os
 import asyncio
@@ -89,12 +90,13 @@ class QueueTask:
     video_filename: str
     width: int
     height: int
-    port: Optional[int] = None  # Добавлено для отслеживания порта
+    port: Optional[int] = None
     created_at: datetime = field(default_factory=datetime.now)
     status: str = "waiting"
     prompt_id: Optional[str] = None
     result_file: Optional[str] = None
     error: Optional[str] = None
+    retry_count: int = 0  # NEW: Track retry attempts
 
 
 class PortManager:
@@ -374,6 +376,9 @@ def load_workflow():
 
 
 def modify_workflow(workflow, task):
+    """
+    FIXED: Модифицирует workflow с исправлениями для длительности видео
+    """
     for node_id, node in workflow.items():
         class_type = node.get("class_type", "")
         title = node.get("_meta", {}).get("title", "")
@@ -390,6 +395,14 @@ def modify_workflow(workflow, task):
         elif class_type == "ResolutionMaster":
             node["inputs"]["width"] = task.width
             node["inputs"]["height"] = task.height
+        
+        # КРИТИЧЕСКИ ВАЖНО: Отключаем trim_to_audio для VHS_VideoCombine
+        # Это предотвращает удлинение видео из-за аудио
+        elif class_type == "VHS_VideoCombine":
+            if "trim_to_audio" in node["inputs"]:
+                node["inputs"]["trim_to_audio"] = False
+                print(f"[WORKFLOW FIX] Disabled trim_to_audio for node {node_id}")
+    
     return workflow
 
 
@@ -413,12 +426,26 @@ async def process_port_queue(port: int, port_queue: PortQueueManager):
             await asyncio.sleep(5)
 
 
+async def interrupt_comfy_processing(comfy_url: str):
+    """Прерывает текущую обработку на ComfyUI сервере"""
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.post(f"{comfy_url}/interrupt", timeout=aiohttp.ClientTimeout(total=5)) as resp:
+                return resp.status == 200
+    except Exception as e:
+        print(f"Error interrupting ComfyUI: {e}")
+        return False
+
+
 async def process_task(task: QueueTask, port_queue: PortQueueManager):
-    """Обработка задачи на конкретном порту"""
+    """
+    FIXED: Обработка задачи с улучшенной обработкой ошибок
+    """
     await port_queue.set_current(task)
     task.status = "processing"
     
     comfy_url = port_queue.comfy_url
+    MAX_RETRIES = 2  # Максимум 2 повторные попытки
     
     try:
         await bot.send_message(
@@ -445,8 +472,47 @@ async def process_task(task: QueueTask, port_queue: PortQueueManager):
                 if not prompt_id:
                     raise Exception("No prompt_id in response")
             
-            # Ожидаем завершения
-            await wait_for_completion(session, comfy_url, prompt_id, task.user_id)
+            # Ожидаем завершения с обработкой ошибок
+            completion_status = await wait_for_completion(session, comfy_url, prompt_id, task.user_id)
+            
+            # Проверяем на критические ошибки NaN
+            if completion_status and "error" in completion_status:
+                error_msg = completion_status["error"]
+                
+                # Проверяем на ошибку "cannot convert float NaN to integer"
+                if "NaN" in error_msg or "cannot convert float" in error_msg:
+                    # Это ошибка детекции лица - лицо не обнаружено четко
+                    if task.retry_count < MAX_RETRIES:
+                        task.retry_count += 1
+                        print(f"[RETRY] Face detection NaN error, retry {task.retry_count}/{MAX_RETRIES}")
+                        
+                        # Прерываем текущую обработку
+                        await interrupt_comfy_processing(comfy_url)
+                        await asyncio.sleep(3)
+                        
+                        # Добавляем задачу обратно в очередь
+                        await port_queue.add_task(task)
+                        await port_queue.set_current(None)
+                        
+                        await bot.send_message(
+                            task.user_id,
+                            f"⚠️ Face detection issue (attempt {task.retry_count}/{MAX_RETRIES})\n"
+                            f"Retrying... Please ensure the face is clearly visible in the photo."
+                        )
+                        return
+                    else:
+                        # Исчерпаны попытки
+                        raise Exception(
+                            "Face detection failed after multiple attempts. "
+                            "Please ensure:\n"
+                            "1. The face is clearly visible\n"
+                            "2. Good lighting on the face\n"
+                            "3. Face is not too small or too large\n"
+                            "4. Face is looking towards camera"
+                        )
+                
+                # Другие ошибки - пробрасываем дальше
+                raise Exception(error_msg)
             
             # Получаем результат
             output_file = await get_output_file(prompt_id)
@@ -472,14 +538,18 @@ async def process_task(task: QueueTask, port_queue: PortQueueManager):
                 raise Exception("Output file not found")
     
     except Exception as e:
-        print(f"Error processing task {task.task_id}: {e}")
+        error_msg = str(e)
+        print(f"Error processing task {task.task_id}: {error_msg}")
         task.status = "error"
-        task.error = str(e)
+        task.error = error_msg
+        
+        # Прерываем обработку на сервере
+        await interrupt_comfy_processing(comfy_url)
         
         try:
             await bot.send_message(
                 task.user_id,
-                f"❌ Error during generation:\n{str(e)}"
+                f"❌ Error during generation:\n{error_msg[:500]}"
             )
         except Exception:
             pass
@@ -491,6 +561,9 @@ async def process_task(task: QueueTask, port_queue: PortQueueManager):
 
 
 async def wait_for_completion(session, comfy_url, prompt_id, user_id, timeout=12000):
+    """
+    FIXED: Улучшенная функция ожидания с детектированием ошибок NaN
+    """
     start_time = asyncio.get_event_loop().time()
     last_progress = -1
     consecutive_errors = 0
@@ -508,10 +581,24 @@ async def wait_for_completion(session, comfy_url, prompt_id, user_id, timeout=12
                         status = history[prompt_id].get("status", {})
                         
                         if status.get("completed", False):
-                            return
+                            return {"completed": True}
                         
+                        # КРИТИЧЕСКИ ВАЖНО: Проверяем на ошибки
                         if "exception_message" in status:
-                            raise Exception(status["exception_message"])
+                            error_msg = status["exception_message"]
+                            print(f"[ERROR DETECTED] {error_msg}")
+                            return {"completed": False, "error": error_msg}
+                        
+                        # Проверяем messages на ошибки
+                        messages = status.get("messages", [])
+                        for msg in messages:
+                            if isinstance(msg, list) and len(msg) >= 2:
+                                msg_type = msg[0]
+                                msg_content = msg[1]
+                                if msg_type == "execution_error":
+                                    error_text = str(msg_content)
+                                    print(f"[EXECUTION ERROR] {error_text}")
+                                    return {"completed": False, "error": error_text}
             
             # Получаем прогресс
             async with session.get(f"{comfy_url}/queue") as resp:
@@ -545,7 +632,7 @@ async def get_output_file(prompt_id):
         files = []
         for filename in os.listdir(OUTPUT_DIR):
             # Ищем файлы с нужными префиксами
-            if (filename.startswith(('wan_native_', 'wananimatev2_nat_')) and 
+            if (filename.startswith(('wan_native_', 'wananimatev2_nat_', 'IAMCCS')) and 
                 filename.endswith(('.mp4', '.gif', '.webm', '.avi', '.mov'))):
                 filepath = os.path.join(OUTPUT_DIR, filename)
                 files.append((filepath, os.path.getmtime(filepath)))
@@ -618,6 +705,8 @@ async def button_my_tasks(message: types.Message):
         text += f"{i}. {status_emoji} {task.status.upper()}\n"
         text += f"   Port: {task.port}\n"
         text += f"   Resolution: {task.width}x{task.height}\n"
+        if task.retry_count > 0:
+            text += f"   Retries: {task.retry_count}\n"
         text += f"   ID: {task.task_id[:8]}...\n\n"
     
     await message.answer(text)
@@ -648,147 +737,75 @@ async def button_queue_status(message: types.Message):
     await message.answer(text)
 
 
-@dp.message(F.text == "Cancel")
-async def button_cancel(message: types.Message, state: FSMContext):
+@dp.message(GenerationStates.choosing_resolution, F.text.in_(list(RESOLUTIONS.keys())))
+async def resolution_chosen(message: types.Message, state: FSMContext):
     if not check_access(message.from_user.id):
         return
     
-    await state.clear()
-    await message.answer("Cancelled", reply_markup=get_main_keyboard())
-
-
-@dp.message(GenerationStates.choosing_resolution)
-async def handle_resolution(message: types.Message, state: FSMContext):
-    if not check_access(message.from_user.id):
-        return
+    resolution = message.text
+    width, height = RESOLUTIONS[resolution]
     
-    resolution_text = message.text
-    if resolution_text not in RESOLUTIONS:
-        await message.answer("Choose resolution from menu:", reply_markup=get_resolution_keyboard())
-        return
-    
-    width, height = RESOLUTIONS[resolution_text]
     await state.update_data(width=width, height=height)
-    
     await message.answer(
-        f"Resolution: {width}x{height}\n\nNow send PHOTO (face to animate):",
+        f"Resolution set: {width}x{height}\n\n"
+        f"Now send your PHOTO (face image):",
         reply_markup=get_cancel_keyboard()
     )
     await state.set_state(GenerationStates.waiting_photo)
 
 
+@dp.message(GenerationStates.choosing_resolution, F.text == "Cancel")
+@dp.message(GenerationStates.waiting_photo, F.text == "Cancel")
+@dp.message(GenerationStates.waiting_video, F.text == "Cancel")
+async def cancel_generation(message: types.Message, state: FSMContext):
+    await state.clear()
+    await message.answer(
+        "Generation cancelled.",
+        reply_markup=get_main_keyboard()
+    )
+
+
 @dp.message(GenerationStates.waiting_photo, F.photo)
-async def handle_photo(message: types.Message, state: FSMContext):
+async def photo_received(message: types.Message, state: FSMContext):
     if not check_access(message.from_user.id):
         return
     
     photo = message.photo[-1]
-    file = await bot.get_file(photo.file_id)
-    photo_filename = f"photo_{uuid.uuid4().hex}.jpg"
-    photo_path = os.path.join(INPUT_DIR, photo_filename)
-    await bot.download_file(file.file_path, photo_path)
+    filename = f"photo_{message.from_user.id}_{uuid.uuid4().hex[:8]}.jpg"
+    filepath = os.path.join(INPUT_DIR, filename)
     
-    await state.update_data(photo_filename=photo_filename)
+    await bot.download(photo, filepath)
+    
+    await state.update_data(photo_filename=filename)
     await message.answer(
-        "Photo received!\n\nNow send VIDEO (motion source):",
-        reply_markup=get_cancel_keyboard()
-    )
-    await state.set_state(GenerationStates.waiting_video)
-
-
-@dp.message(GenerationStates.waiting_photo, F.document)
-async def handle_photo_document(message: types.Message, state: FSMContext):
-    if not check_access(message.from_user.id):
-        return
-    
-    doc = message.document
-    mime = doc.mime_type or ""
-    filename = doc.file_name or ""
-    
-    is_image = mime.startswith("image/") or filename.lower().endswith(('.jpg', '.jpeg', '.png', '.webp'))
-    
-    if not is_image:
-        await message.answer("Please send a photo (image file)")
-        return
-    
-    file = await bot.get_file(doc.file_id)
-    ext = filename.split('.')[-1] if '.' in filename else 'jpg'
-    photo_filename = f"photo_{uuid.uuid4().hex}.{ext}"
-    photo_path = os.path.join(INPUT_DIR, photo_filename)
-    await bot.download_file(file.file_path, photo_path)
-    
-    await state.update_data(photo_filename=photo_filename)
-    await message.answer(
-        "Photo received!\n\nNow send VIDEO (motion source):",
+        "✅ Photo received!\n\n"
+        "Now send your VIDEO (motion source):",
         reply_markup=get_cancel_keyboard()
     )
     await state.set_state(GenerationStates.waiting_video)
 
 
 @dp.message(GenerationStates.waiting_video, F.video)
-async def handle_video(message: types.Message, state: FSMContext):
+async def video_received(message: types.Message, state: FSMContext):
     if not check_access(message.from_user.id):
         return
     
     video = message.video
-    file = await bot.get_file(video.file_id)
-    video_filename = f"video_{uuid.uuid4().hex}.mp4"
-    video_path = os.path.join(INPUT_DIR, video_filename)
-    await bot.download_file(file.file_path, video_path)
+    filename = f"video_{message.from_user.id}_{uuid.uuid4().hex[:8]}.mp4"
+    filepath = os.path.join(INPUT_DIR, filename)
     
-    await state.update_data(video_filename=video_filename)
-    await add_to_queue(message, state)
-
-
-@dp.message(GenerationStates.waiting_video, F.document)
-async def handle_video_document(message: types.Message, state: FSMContext):
-    if not check_access(message.from_user.id):
-        return
+    await bot.download(video, filepath)
     
-    doc = message.document
-    mime = doc.mime_type or ""
-    filename = doc.file_name or ""
-    
-    is_video = mime.startswith("video/") or filename.lower().endswith(('.mp4', '.avi', '.mov', '.webm'))
-    
-    if not is_video:
-        await message.answer("Please send a video file")
-        return
-    
-    file = await bot.get_file(doc.file_id)
-    ext = filename.split('.')[-1] if '.' in filename else 'mp4'
-    video_filename = f"video_{uuid.uuid4().hex}.{ext}"
-    video_path = os.path.join(INPUT_DIR, video_filename)
-    await bot.download_file(file.file_path, video_path)
-    
-    await state.update_data(video_filename=video_filename)
-    await add_to_queue(message, state)
-
-
-@dp.message(GenerationStates.waiting_video, F.video_note)
-async def handle_video_note(message: types.Message, state: FSMContext):
-    if not check_access(message.from_user.id):
-        return
-    
-    video_note = message.video_note
-    file = await bot.get_file(video_note.file_id)
-    video_filename = f"video_{uuid.uuid4().hex}.mp4"
-    video_path = os.path.join(INPUT_DIR, video_filename)
-    await bot.download_file(file.file_path, video_path)
-    
-    await state.update_data(video_filename=video_filename)
-    await add_to_queue(message, state)
-
-
-async def add_to_queue(message: types.Message, state: FSMContext):
     data = await state.get_data()
+    await state.update_data(video_filename=filename)
     
+    # Создаем задачу
     task = QueueTask(
-        task_id=str(uuid.uuid4()),
+        task_id=uuid.uuid4().hex,
         user_id=message.from_user.id,
         username=message.from_user.username or str(message.from_user.id),
         photo_filename=data["photo_filename"],
-        video_filename=data["video_filename"],
+        video_filename=filename,
         width=data["width"],
         height=data["height"]
     )
@@ -924,15 +941,8 @@ async def callback_cancel_task(callback: types.CallbackQuery):
             
             if task and task.port:
                 comfy_url = port_manager.get_url_for_port(task.port)
-                try:
-                    async with aiohttp.ClientSession() as session:
-                        async with session.post(f"{comfy_url}/interrupt") as resp:
-                            if resp.status == 200:
-                                await callback.answer("Task cancelled!")
-                            else:
-                                await callback.answer("Failed to interrupt on server")
-                except Exception as e:
-                    await callback.answer(f"Error: {e}")
+                await interrupt_comfy_processing(comfy_url)
+                await callback.answer("Task cancelled!")
         else:
             await callback.answer("Task removed from queue!")
     else:
@@ -997,7 +1007,7 @@ async def cmd_refresh_ports(message: types.Message):
 
 async def main():
     print("=" * 50)
-    print("Multi-GPU ComfyUI Bot Starting...")
+    print("Multi-GPU ComfyUI Bot Starting... (FIXED VERSION)")
     print(f"Admin ID: {ADMIN_ID}")
     print(f"Whitelist: {len(whitelist)} users")
     print(f"Base Host: {COMFY_BASE_HOST}")
@@ -1023,7 +1033,7 @@ async def main():
         print(f"✓ Started queue processor for port {port}")
     
     print("=" * 50)
-    print("✅ Bot is ready!")
+    print("✅ Bot is ready! (With NaN error handling and video duration fix)")
     print("=" * 50)
     
     await dp.start_polling(bot)
